@@ -23,8 +23,15 @@ const fechaFormato = (value) => {
 };
 
 function formatearMiles(valor) {
-  const limpio = String(valor || '').replace(/\D/g, '');
-  return limpio.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  let limpio = String(valor || '')
+    .replace(/[^\d,]/g, '') // permite números y coma
+    .replace(/,(?=.*?,)/g, ''); // evita varias comas
+
+  const partes = limpio.split(',');
+
+  partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+  return partes.join(',');
 }
 
 function quitarFormato(valor) {
