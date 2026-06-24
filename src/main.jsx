@@ -115,7 +115,7 @@ function App() {
       totalGastos,
       diferencia,
       totalOperacion,
-      cuadra: valorVenta > 0 && diferencia === 0
+      cuadra: valorVenta > 0 && diferencia.toFixed(2) === '0.00'
     };
   }, [form.valorVenta, form.partidas, form.gastos]);
 
