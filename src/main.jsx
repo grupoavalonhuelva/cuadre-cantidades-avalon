@@ -8,14 +8,15 @@ const EMPRESA = 'Grupo Avalon Huelva S.L.';
 const CIF = 'B13976824';
 const IBAN = 'ES77 2100 7174 1002 0016 8101';
 
-const euros = (n) =>
-  new Intl.NumberFormat('es-ES', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(Number(n || 0));
+const euros = (n) => {
+  const numero = Number(n || 0);
 
+  const partes = numero.toFixed(2).split('.');
+  const parteEntera = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const parteDecimal = partes[1];
+
+  return `${parteEntera},${parteDecimal} €`;
+};
 const fechaFormato = (value) => {
   if (!value) return '';
   const [anio, mes, dia] = value.split('-');
