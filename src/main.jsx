@@ -23,15 +23,26 @@ const fechaFormato = (value) => {
 };
 
 function formatearMiles(valor) {
-  let limpio = String(valor || '')
-    .replace(/[^\d,]/g, '') // permite números y coma
-    .replace(/,(?=.*?,)/g, ''); // evita varias comas
+  const texto = String(valor || '')
+    .replace(/€/g, '')
+    .replace(/\s/g, '');
 
-  const partes = limpio.split(',');
+  // Dejamos solo números y coma decimal.
+  // Quitamos puntos anteriores para volver a formatear los miles desde cero.
+  let limpio = texto
+    .replace(/\./g, '')
+    .replace(/[^\d,]/g, '');
 
-  partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const primeraComa = limpio.indexOf(',');
 
-  return partes.join(',');
+  if (primeraComa !== -1) {
+    const parteEntera = limpio.slice(0, primeraComa);
+    const parteDecimal = limpio.slice(primeraComa + 1).replace(/,/g, '');
+    const parteEnteraFormateada = parteEntera.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return `${parteEnteraFormateada},${parteDecimal}`;
+  }
+
+  return limpio.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
 function quitarFormato(valor) {
@@ -354,7 +365,7 @@ function App() {
           <input
             className="importe-input"
             type="text"
-            inputMode="numeric"
+            inputMode="decimal"
             value={form.valorVenta}
             onChange={e => update('valorVenta', formatearMiles(e.target.value))}
             placeholder="250.000"
@@ -381,7 +392,7 @@ function App() {
 
               <input
                 type="text"
-                inputMode="numeric"
+                inputMode="decimal"
                 value={p.importe}
                 onChange={e => updatePartida(i, 'importe', formatearMiles(e.target.value))}
                 placeholder="0"
@@ -412,7 +423,7 @@ function App() {
 
               <input
                 type="text"
-                inputMode="numeric"
+                inputMode="decimal"
                 value={g.importe}
                 onChange={e => updateGasto(i, 'importe', formatearMiles(e.target.value))}
                 placeholder="0"
