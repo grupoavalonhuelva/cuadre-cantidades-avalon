@@ -48,9 +48,7 @@ function App() {
       { concepto: 'Reserva', importe: '' },
       { concepto: 'Arras', importe: '' }
     ],
-    gastos: [
-      { concepto: 'Honorarios inmobiliarios', importe: '' }
-    ],
+    gastos: [],
     observaciones: ''
   });
 
@@ -129,11 +127,49 @@ function App() {
     }
   }
 
+  function pintarFooter(doc, margin, pageWidth) {
+    const footerY = 270;
+
+    doc.setTextColor(0, 0, 0);
+    doc.setDrawColor(0);
+    doc.line(margin, footerY - 8, pageWidth - margin, footerY - 8);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text(EMPRESA, margin, footerY);
+
+    doc.setFont('helvetica', 'normal');
+    doc.text(`CIF: ${CIF}`, margin, footerY + 6);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('IBAN:', margin, footerY + 14);
+    doc.text(IBAN, margin + 14, footerY + 14);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;
+    doc.text(`Página ${pageNumber}`, pageWidth - margin, 290, { align: 'right' });
+  }
+
+  function asegurarEspacio(doc, y, alturaNecesaria, margin, pageWidth) {
+    const limiteContenido = 252; // deja libre el bloque inferior de empresa/CIF/IBAN
+
+    if (y + alturaNecesaria > limiteContenido) {
+      pintarFooter(doc, margin, pageWidth);
+      doc.addPage();
+      return 18;
+    }
+
+    return y;
+  }
+
   function pintarTabla(doc, titulo, filas, y, margin, pageWidth) {
     const tableW = pageWidth - margin * 2;
     const conceptW = tableW - 45;
     const amountW = 45;
     const rowH = 8;
+
+    y = asegurarEspacio(doc, y, 20 + filas.length * rowH, margin, pageWidth);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
@@ -152,17 +188,19 @@ function App() {
     y += rowH;
 
     filas.forEach((p, index) => {
-      const importe = quitarFormato(p.importe);
+      y = asegurarEspacio(doc, y, rowH + 8, margin, pageWidth);
+
       doc.setFillColor(index % 2 === 0 ? 250 : 242, index % 2 === 0 ? 250 : 242, index % 2 === 0 ? 250 : 242);
       doc.rect(margin, y, tableW, rowH, 'F');
       doc.setDrawColor(225);
       doc.rect(margin, y, tableW, rowH);
 
       doc.setFont('helvetica', 'normal');
-      doc.text(p.concepto || 'Sin concepto', margin + 4, y + 5.5);
+      const conceptoLines = doc.splitTextToSize(p.concepto || 'Sin concepto', conceptW - 8);
+      doc.text(conceptoLines.slice(0, 1), margin + 4, y + 5.5);
 
       doc.setFont('helvetica', 'bold');
-      doc.text(euros(importe), margin + conceptW + amountW - 4, y + 5.5, { align: 'right' });
+      doc.text(euros(quitarFormato(p.importe)), margin + conceptW + amountW - 4, y + 5.5, { align: 'right' });
 
       y += rowH;
     });
@@ -229,6 +267,8 @@ function App() {
 
     const tableW = pageWidth - margin * 2;
 
+    y = asegurarEspacio(doc, y, 34, margin, pageWidth);
+
     doc.setDrawColor(0);
     doc.setFillColor(245, 245, 245);
     doc.roundedRect(margin, y, tableW, 34, 3, 3, 'FD');
@@ -246,6 +286,8 @@ function App() {
 
     y += 43;
 
+    y = asegurarEspacio(doc, y, 16, margin, pageWidth);
+
     doc.setFillColor(0, 0, 0);
     doc.roundedRect(margin, y, tableW, 16, 3, 3, 'F');
     doc.setTextColor(255, 255, 255);
@@ -258,6 +300,7 @@ function App() {
     y += 25;
 
     if (form.observaciones.trim()) {
+      y = asegurarEspacio(doc, y, 35, margin, pageWidth);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.text('Observaciones:', margin, y);
@@ -269,24 +312,7 @@ function App() {
       doc.text(obsLines.slice(0, 6), margin, y);
     }
 
-    const footerY = 270;
-    doc.setDrawColor(0);
-    doc.line(margin, footerY - 8, pageWidth - margin, footerY - 8);
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text(EMPRESA, margin, footerY);
-
-    doc.setFont('helvetica', 'normal');
-    doc.text(`CIF: ${CIF}`, margin, footerY + 6);
-
-    doc.setFont('helvetica', 'bold');
-    doc.text('IBAN:', margin, footerY + 14);
-    doc.text(IBAN, margin + 14, footerY + 14);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.text('Página 1', pageWidth - margin, 290, { align: 'right' });
+    pintarFooter(doc, margin, pageWidth);
 
     doc.save(`cuadre-cantidades-${form.comprador || 'avalon'}.pdf`);
   }
@@ -392,7 +418,7 @@ function App() {
                 placeholder="0"
               />
 
-              <button type="button" className="danger" onClick={() => removeGasto(i)} disabled={form.gastos.length <= 1}>Eliminar</button>
+              <button type="button" className="danger" onClick={() => removeGasto(i)}>Eliminar</button>
             </div>
           ))}
         </div>
